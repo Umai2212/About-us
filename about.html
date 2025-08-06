@@ -1,0 +1,557 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Adventurer Divine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            height: 80px;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            width: 100%;
+            max-width: 1440px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: clamp(20px, 5vw, 24px);
+            font-weight: 700;
+            color: #2e7d32;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+
+        .nav-menu a:hover {
+            color: #2e7d32;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 160px;
+            z-index: 1;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            display: block;
+            padding: 10px;
+        }
+
+        .cta-button {
+            background: #2e7d32;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: clamp(14px, 4vw, 16px);
+        }
+
+        .hamburger {
+            display: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: clamp(450px, 80vw, 600px);
+            background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4') no-repeat center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            background-size: 1920px 1080px;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4));
+        }
+
+        .hero-content {
+            position: relative;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .hero-content h1 {
+            font-size: clamp(28px, 6vw, 48px);
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .hero-content p {
+            font-size: clamp(16px, 4vw, 24px);
+        }
+
+        /* Content Sections */
+        .section {
+            padding: clamp(40px, 10vw, 60px) 20px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .section h2 {
+            font-size: clamp(24px, 5vw, 36px);
+            margin-bottom: 20px;
+            color: #2e7d32;
+        }
+
+        .section p {
+            font-size: clamp(14px, 3vw, 16px);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .team-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .team-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+        }
+
+        .team-card h3 {
+            font-size: clamp(18px, 4vw, 24px);
+            margin-bottom: 10px;
+        }
+
+        .team-card p {
+            font-size: clamp(14px, 3vw, 16px);
+            color: #666;
+        }
+
+        .fun-facts {
+            background: #fcf8f2;
+            padding: clamp(40px, 10vw, 60px) 20px;
+        }
+
+        .fun-facts h2 {
+            font-size: clamp(24px, 5vw, 36px);
+            margin-bottom: 20px;
+            text-align: center;
+            color: #2e7d32;
+        }
+
+        .facts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .fact-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .fact-card h3 {
+            font-size: clamp(16px, 4vw, 20px);
+            margin-bottom: 10px;
+        }
+
+        /* Newsletter Signup */
+        .newsletter {
+            padding: clamp(40px, 10vw, 60px) 20px;
+            background: #2e7d32;
+            color: #fff;
+            text-align: center;
+        }
+
+        .newsletter h2 {
+            font-size: clamp(24px, 5vw, 36px);
+            margin-bottom: 20px;
+        }
+
+        .newsletter form {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .newsletter input[type="email"] {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            width: clamp(200px, 80%, 300px);
+        }
+
+        .newsletter button {
+            background: #fff;
+            color: #2e7d32;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            background: #424242;
+            color: #fff;
+            padding: clamp(30px, 8vw, 40px) 20px;
+            text-align: center;
+        }
+
+        .footer-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .footer-column {
+            flex: 1;
+            min-width: clamp(150px, 40%, 200px);
+        }
+
+        .footer-column h3 {
+            font-size: clamp(16px, 4vw, 20px);
+            margin-bottom: 20px;
+        }
+
+        .footer-column a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+            font-size: clamp(14px, 3vw, 16px);
+        }
+
+        .social-icons a {
+            color: #fff;
+            margin: 0 10px;
+            font-size: clamp(18px, 5vw, 24px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 80px;
+                left: 0;
+                width: 100%;
+                background: #fff;
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+
+            .nav-menu.active {
+                display: flex;
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .dropdown-content {
+                position: static;
+                box-shadow: none;
+            }
+
+            .cta-button {
+                margin-left: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-content h1 {
+                font-size: clamp(24px, 8vw, 32px);
+            }
+
+            .hero-content p {
+                font-size: clamp(14px, 5vw, 18px);
+            }
+
+            .team-card img {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">Adventurer Divine</div>
+            <div class="hamburger">☰</div>
+            <div class="nav-menu">
+                <a href="#">Home</a>
+                <div class="dropdown">
+                    <a href="#">Destinations ⌄</a>
+                    <div class="dropdown-content">
+                        <a href="#">Colorado</a>
+                        <a href="#">Utah</a>
+                        <a href="#">California</a>
+                    </div>
+                </div>
+                <a href="#">Hiking Routes</a>
+                <a href="#">Gear</a>
+                <a href="#">Tips & Guides</a>
+                <a href="#">Blog</a>
+            </div>
+            <a href="#" class="cta-button">Subscribe</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>About Adventurer Divine</h1>
+            <p>Embarking on a journey to inspire and guide hikers across the USA</p>
+        </div>
+    </section>
+
+    <!-- Introduction -->
+    <section class="section">
+        <h2>Welcome to Adventurer Divine</h2>
+        <p>Adventurer Divine is more than a hiking blog—it's a community built for dreamers, planners, and explorers who crave the thrill of the trail. Our mission is to ignite your passion for hiking by providing meticulously researched guides, authentic stories from real hikers, and practical tips for all levels. Whether you're a first-timer or a seasoned trekker, we offer beginner-friendly resources, gear reviews tested by real people, and curated routes across the USA. What sets us apart? We dive deep into research, prioritize clarity, and share stories that inspire you to lace up your boots and hit the trail with confidence.</p>
+    </section>
+
+    <!-- Our Story -->
+    <section class="section" style="background: #fcf8f2;">
+        <h2>Our Story: The Journey Behind Adventurer Divine</h2>
+        <p>We started as three students with a shared love for the outdoors but limited hiking experience. Umair, Drakshayani, and Shariq met during college, united by a dream to create a platform that makes hiking accessible to everyone. Despite not being seasoned hikers, we saw a gap: too many blogs offered generic advice or overwhelming details. We built Adventurer Divine to bridge that gap, offering clear, well-researched content for planners, dreamers, and curious minds. From late-night brainstorming to overcoming technical hurdles, our journey reflects the same grit and passion we bring to every post, ensuring you have the tools to explore with confidence.</p>
+    </section>
+
+    <!-- Meet the Team -->
+    <section class="section">
+        <h2>Meet the Team</h2>
+        <div class="team-grid">
+            <div class="team-card">
+                <img src="https://images.unsplash.com/photo-1506794778202-6d8d17e6b2c4" alt="Umair Abdullah">
+                <h3>Umair Abdullah</h3>
+                <p>Tech Builder & Strategy Lead. With a BCA background and pursuing an MCA, Umair is our tech wizard, handling web development, SEO, and content strategy. His love for hiking fuels our mission to inspire others.</p>
+            </div>
+            <div class="team-card">
+                <img src="https://images.unsplash.com/photo-1526772662000-3f88f10405ff" alt="Drakshayani">
+                <h3>Drakshayani</h3>
+                <p>Content Curator & Story Architect. A BCA grad pursuing an MCA, Drakshayani crafts compelling stories and formats our posts for clarity and engagement, ensuring every article resonates.</p>
+            </div>
+            <div class="team-card">
+                <img src="https://images.unsplash.com/photo-1501555088652-021faa106b9b" alt="Shariq">
+                <h3>Shariq</h3>
+                <p>Technical Researcher & Gear Analyst. Studying aerospace engineering, Shariq brings a scientific approach to route planning and gear evaluation, explaining the “how” behind hiking.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Approach -->
+    <section class="section" style="background: #f9f9f9;">
+        <h2>Our Approach: Content You Can Trust</h2>
+        <p>We’re obsessed with delivering reliable, actionable content. Our process starts with deep keyword research to understand what hikers need, followed by real-world validation through hiking communities and expert insights. Our gear guides aren’t just lists—they’re based on thorough research and user experiences. We curate authentic hiker stories, prioritize clear visuals, and include practical checklists to make your adventures seamless. Every article is manually fact-checked and proofread to ensure accuracy and usability, so you can trust us to guide you on your journey.</p>
+    </section>
+
+    <!-- Who We Write For -->
+    <section class="section">
+        <h2>Who We Write For</h2>
+        <p>Adventurer Divine is built for three types of hikers. <strong>The Planner</strong> gets detailed trip checklists, beginner guides, and route maps to prepare with confidence. <strong>The Curator</strong> loves our story-driven posts and real hiker interviews that spark inspiration. <strong>The Researcher</strong> dives into our gear comparisons, science-backed hiking tips, and guides on using apps and GPS. No matter your style, we craft content tailored to your needs, ensuring every hike is memorable and well-prepared.</p>
+    </section>
+
+    <!-- Why Trust Us -->
+    <section class="section" style="background: #fcf8f2;">
+        <h2>Why Trust Us?</h2>
+        <p>While we’re not veteran hikers (yet!), our research is deep and methodical, designed with beginners in mind. Our team’s technical backgrounds in computer applications and aerospace engineering bring expertise in digital publishing and analytical thinking. We cite reliable sources, tap into hiking communities, and test gear insights with real users. Transparency is key—we avoid AI-generated fluff, disclose any affiliate links, and focus on authenticity to build trust with our readers.</p>
+    </section>
+
+    <!-- Behind the Scenes -->
+    <section class="section">
+        <h2>Behind the Scenes: How We Work</h2>
+        <p>Our content starts with a 3-month plan, mapping out topics that matter to you. We use tools like Figma for design, Notion for organization, SEMrush for research, and Canva for visuals. Every idea is a team effort, with Umair structuring the site, Drakshayani shaping stories, and Shariq diving into technical details. Each article undergoes manual fact-checking and proofreading to ensure it’s clear, accurate, and ready to inspire your next adventure.</p>
+    </section>
+
+    <!-- What's Next -->
+    <section class="section" style="background: #f9f9f9;">
+        <h2>What’s Next for Adventurer Divine</h2>
+        <p>We’re just getting started. Our goals include hitting local trails to document real hiking experiences, collaborating with seasoned hikers, and growing our Instagram and YouTube with stunning visuals. We’re planning newsletters, downloadable trail guides, and maybe even a gear store. Our vision is to become your go-to resource for hiking inspiration, blending practical advice with the wonder of exploration.</p>
+    </section>
+
+    <!-- Connect With Us -->
+    <section class="section">
+        <h2>Connect With Us</h2>
+        <p>Join our journey! Follow us on Instagram for trail inspiration, subscribe to our newsletter for weekly updates, or leave a comment with your hiking stories. We’d love to hear from you and share your adventures with our community. Reach out via our contact page or socials to connect.</p>
+    </section>
+
+    <!-- Fun Facts -->
+    <section class="fun-facts">
+        <h2>Fun Facts About the Team</h2>
+        <div class="facts-grid">
+            <div class="fact-card">
+                <h3>Dream Hike</h3>
+                <p>Umair: Inca Trail, Peru<br>Drakshayani: Annapurna Circuit, Nepal<br>Shariq: Mount Kilimanjaro, Tanzania</p>
+            </div>
+            <div class="fact-card">
+                <h3>Favorite Gear</h3>
+                <p>Umair: Osprey Atmos Backpack<br>Drakshayani: Merrell Moab Hiking Boots<br>Shariq: Garmin GPSMAP 66i</p>
+            </div>
+            <div class="fact-card">
+                <h3>Surprising Fact</h3>
+                <p>The Appalachian Trail takes 5-7 months to complete, and only 1 in 4 thru-hikers finish!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Signup -->
+    <section class="newsletter">
+        <h2>Never Miss a Trail</h2>
+        <form>
+            <input type="email" placeholder="Enter your email" required>
+            <button type="submit">Subscribe</button>
+        </form>
+        <p>Get trail updates, beginner tips, and gear reviews weekly</p>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-column">
+                <h3>Quick Links</h3>
+                <a href="#">Home</a>
+                <a href="#">Routes</a>
+                <a href="#">Destinations</a>
+                <a href="#">Blog</a>
+            </div>
+            <div class="footer-column">
+                <h3>About</h3>
+                <p>Adventurer Divine is your go-to resource for hiking in the USA.</p>
+                <p>Contact: info@adventurerdivine.com</p>
+            </div>
+            <div class="footer-column">
+                <h3>Follow Us</h3>
+                <div class="social-icons">
+                    <a href="#">Instagram</a>
+                    <a href="#">YouTube</a>
+                    <a href="#">Twitter</a>
+                </div>
+            </div>
+        </div>
+        <p style="margin-top: 20px;">&copy; 2025 Adventurer Divine. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Hamburger menu toggle
+        document.querySelector('.hamburger').addEventListener('click', () => {
+            document.querySelector('.nav-menu').classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
